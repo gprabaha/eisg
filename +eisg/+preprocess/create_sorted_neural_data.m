@@ -41,14 +41,12 @@ for file_ind_in_dir = 1:length(all_folders)
     uuid = uuid_start:uuid_start+n_units-1;
     uuid_start = uuid_start+n_units;
     file_sorting_output.uuid = uuid;
+    file_sorting_output = eisg.preprocess.update_calculated_features_in_file_sorting_output( file_sorting_output, params );
     sorted_neural_data = [sorted_neural_data file_sorting_output];
 end
 clc;
 disp('Sorted neural data creation progress:');
 eisg.util.draw_progress_bar(file_ind_in_dir, length(all_folders), params.num_ticks_in_progress_bar);
-if params.calculate_features
-    sorted_neural_data = eisg.preprocess.update_calculated_features_in_sorted_neural_data( sorted_neural_data, params );
-end
 
 end
 
