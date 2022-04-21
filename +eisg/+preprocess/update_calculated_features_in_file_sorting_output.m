@@ -1,7 +1,7 @@
 function file_sorting_output = update_calculated_features_in_file_sorting_output(...
     file_sorting_output, varargin)
 
-defaults = eisi.util.make_preprocess_params_struct;
+defaults = eisg.util.make_preprocess_params_struct();
 defaults.feature_list = {
     'peak_to_valley', ...
     'halfwidth', ...
@@ -48,7 +48,7 @@ for unit_ind = 1:n_units
         is_unit_valid = logical( unit_validity );
     end
     if is_unit_valid
-        unit_template = file_sorting_output.normalized_templates(unit_ind, :);
+        unit_template = file_sorting_output.templates(unit_ind, :);
         unit_template_norm = unit_template / max( abs(unit_template) );
         sampling_frequency = file_sorting_output.sort_params.sampling_frequency;
         rel_timepoints = make_timepoints_from_template(unit_template_norm, sampling_frequency);
