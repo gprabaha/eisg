@@ -3,6 +3,7 @@ function params = make_preprocess_params_struct()
 params = struct();
 
 params.processed_data_folder = 'processed_data';
+params.sorted_data_filename = 'sorted_neural_data_social_gaze.mat';
 params.include_unsure_units = true;
 params.path_to_sorter_output = [];
 params.sorted_neural_data_filename = [];

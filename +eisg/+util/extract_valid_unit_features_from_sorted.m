@@ -41,6 +41,7 @@ for file_ind = 1:size(sorted_neural_data, 2)
 end
 label_categories = {'region', 'uuid', 'file_ind', 'unit_ind'};
 valid_unit_features.feature_matrix = feature_matrix;
+valid_unit_features.feature_list = feature_list;
 valid_unit_features.label_matrix = label_matrix;
 valid_unit_features.label_categories = label_categories;
 

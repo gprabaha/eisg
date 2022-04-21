@@ -81,14 +81,14 @@ for region = regions
         pl.add_smoothing = true;
         pl.main_line_width = 1.5;
         pl.error_line_width = 0.5;
-        pl.lines( uuid_psth./bin_width, uuid_psth_labels, {'roi_simp'} );
+        pl.lines( uuid_psth./bin_width, uuid_psth_labels, {'roi_simp'}, {'region', 'uuid'} );
         
         % Saving fig
-        save_folder_path = fullfile( params.plot_folder, 'single_unit_psth', char(region), char(uuid_ei_label) );
+        save_folder_path = fullfile( './', params.plot_folder, 'single_unit_psth', char(region), char(uuid_ei_label) );
         if ~exist(save_folder_path, 'dir')
             mkdir(save_folder_path)
         end
-        dsp3.req_savefig( gcf, save_folder_path, uuid_psth_labels, {'region', 'uuid', 'celltype'} );
+        dsp3.req_savefig( gcf, save_folder_path, uuid_psth_labels, {'region', 'uuid'}, 'single_unit_psth' );
         
     end
 end

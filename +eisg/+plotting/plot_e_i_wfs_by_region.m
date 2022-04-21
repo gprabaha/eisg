@@ -68,6 +68,9 @@ for i = 1:numel(ids)
   end
 end
 
+save_p = '~/Desktop/example_plots';
+dsp3.req_savefig( gcf, save_p, wf_labels, {}, 'social_gaze_e_i_efs');
+
 mn = min( normalized_wfs(:) );
 mx = max( normalized_wfs(:) );
 shared_utils.plot.set_ylims( axs, [mn, mx] );
