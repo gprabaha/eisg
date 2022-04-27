@@ -23,9 +23,11 @@ max_t = 0.5;
 bin_width = 0.05;
 
 [psth_matrix, psth_labels, t] = compute_psth(...
-  spike_ts, spike_labels, spk_mask, evts, events.labels, evt_mask, min_t, max_t, bin_width );
+    spike_ts, spike_labels, spk_mask ...
+  , evts, events.labels, evt_mask ...
+  , min_t, max_t, bin_width );
 
-%%  compare pairs of rois, use ranksum test
+%%  discriminate between pairs of rois
 
 t_win = [0, 0.5];
 t_mask = t >= t_win(1) & t < t_win(2);
@@ -37,20 +39,23 @@ roi_pairs = bfw.pair_combination_indices( numel(rois) );
 as = arrayfun( @(x) rois{x}, roi_pairs(:, 1), 'un', 0 );
 bs = arrayfun( @(x) rois{x}, roi_pairs(:, 2), 'un', 0 );
 
-% ranksum tests comparing a vs b, for each a in as and b in bs
-[rs_tables, rs_labels] = ranksums( ...
-  t_mean, psth_labels, {'uuid', 'looks_by'}, as, bs, 'roi' );
+% discriminate between a and b, for each a in as and b in bs
+each_I = findall( psth_labels, {'uuid', 'looks_by'} );
+[fit_res, fit_labels] = binary_fitcdiscrs( ...
+  t_mean, psth_labels, each_I, as, bs, 'roi' );
 
-% extract p value from ranksum test
-rs_ps = cellfun( @(x) x.p, rs_tables );
-is_sig = rs_ps < 0.05;
-sig_cells = cellstr( rs_labels, {'region', 'uuid'}, find(is_sig) );
+%%  plot results
+
+% extract p value from classification
+ps = cellfun( @(x) x.p, fit_res );
+is_sig = ps < 0.05;
 
 % proportions of significant cells per region and roi
-[prop_labs, prop_I] = retaineach( rs_labels, {'region', 'looks_by', 'roi'} );
+mask = findnone( fit_labels, {'<cell-type>'} );
+[prop_labs, prop_I] = retaineach(...
+  fit_labels, {'region', 'looks_by', 'roi', 'cell-type'}, mask );
 props = proportions( is_sig, prop_I );
 
 pl = plotlabeled.make_common();
-axs = pl.bar( props, prop_labs, {}, 'region', {'roi', 'looks_by'} );
-ylabel( axs(1), '% Significant a vs b.' );
-
+axs = pl.bar( props, prop_labs, {}, 'region', {'roi', 'looks_by', 'cell-type'} );
+ylabel( axs(1), 'Prop Significant a vs b.' );

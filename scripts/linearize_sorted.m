@@ -14,7 +14,7 @@ for i = 1:numel(sorted)
       'region', sorted(i).region ...
     , 'filename', sorted(i).filename ...
     , 'session', parse_session(sorted(i).filename) ...
-    , 'validity', parse_validity(sorted(i).validity) ...
+    , 'validity', parse_validities(sorted(i).validity) ...
     , 'uuid', arrayfun(@(x) sprintf('uuid-%d', x), unit_uuids, 'un', 0) ...
   );
   all_spike_ts = [ all_spike_ts; spike_ts ];
@@ -26,12 +26,17 @@ end
 function sesh = parse_session(fname)
 sesh = fname(isstrprop(fname, 'digit'));
 end
+
+function strs = parse_validities(valids)
+strs = arrayfun( @parse_validity, valids, 'un', 0 );
+end
+
 function str = parse_validity(valid)
-str = arrayfun( @(x) ternary(x == 1, 'valid-unit', 'invalid-unit'), valid, 'un', 0 );
-
-% NaNs are units that are marked 'maybe valid'
-% Code to accept 'maybe valid units'
-
-% str = arrayfun( @(x) ternary(x == 1 || isnan(x), 'valid-unit', 'invalid-unit'), valid, 'un', 0 );
-
+if ( isnan(valid) )
+  str = 'maybe-valid-unit';
+elseif ( valid == 1 )
+  str = 'valid-unit';
+else
+  str = 'invalid-unit';
+end
 end
