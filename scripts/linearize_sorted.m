@@ -28,4 +28,10 @@ sesh = fname(isstrprop(fname, 'digit'));
 end
 function str = parse_validity(valid)
 str = arrayfun( @(x) ternary(x == 1, 'valid-unit', 'invalid-unit'), valid, 'un', 0 );
+
+% NaNs are units that are marked 'maybe valid'
+% Code to accept 'maybe valid units'
+
+% str = arrayfun( @(x) ternary(x == 1 || isnan(x), 'valid-unit', 'invalid-unit'), valid, 'un', 0 );
+
 end
