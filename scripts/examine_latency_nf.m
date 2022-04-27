@@ -1,4 +1,4 @@
-data_p = 'C:\Users\nick\Downloads';
+data_p = '~/Downloads';
 
 sorted = shared_utils.io.fload( fullfile(data_p, 'sorted_neural_data_social_gaze.mat') );
 events = shared_utils.io.fload( fullfile(data_p, 'events.mat') );
@@ -39,7 +39,7 @@ peaks(~isnan(peaks)) = t(peaks(~isnan(peaks)));
 %%  plot histogram of latencies
 
 save_p = fullfile( eisg.util.project_path, 'data/plots/latency/hist', dsp3.datedir );
-do_save = true;
+do_save = false;
 
 plt_mask = pipe( rowmask(mean_labs) ...
   , @(m) intersect(m, find(~isnan(peaks))) ...
