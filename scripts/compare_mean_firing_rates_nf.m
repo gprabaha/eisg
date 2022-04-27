@@ -16,7 +16,7 @@ evts = bfw.event_column( events, 'start_time' );
 rois = { 'whole_face', 'right_nonsocial_object_whole_face_matched' };
 
 evt_mask = find( events.labels, [{'m1'}, rois] );
-spk_mask = find( spike_labels, 'valid-unit' );
+spk_mask = find( spike_labels, {'valid-unit', 'maybe-valid-unit'} );
 
 min_t = -0.5;
 max_t = 0.5;
