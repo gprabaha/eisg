@@ -2,7 +2,7 @@ function [model_p, real_p, null_ps] = binary_fitcdiscr_perm_test(data, ind_a, in
 
 defaults = struct();
 defaults.hold_out = 0.1;
-defaults.iters = 1e2;
+defaults.iters = 1e3;
 params = shared_utils.general.parsestruct( defaults, varargin );
 
 hold_out = params.hold_out;

@@ -29,7 +29,12 @@ parfor it = 1:numel(each_I)
       p_gt = nan;
     else
       labs = append1( fcat, labels, [ind_a; ind_b] );
-      p_gt = binary_fitcdiscr_perm_test( data, ind_a, ind_b );
+      try 
+        p_gt = binary_fitcdiscr_perm_test( data, ind_a, ind_b );
+      catch err
+        warning( err.message );
+        p_gt = nan;
+      end
     end
     
     d{end+1, 1} = struct( 'p', p_gt );

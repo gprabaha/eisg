@@ -27,19 +27,19 @@ bin_width = 0.05;
 
 %%  mean psth + peak times
 
-n_devs = 1.5; % detect peak at first time above mean + std * n_devs
+n_devs = 5; % detect peak at first time above mean + std * n_devs
 
 [mean_labs, mean_I] = retaineach( psth_labels, {'uuid', 'looks_by', 'roi'} );
 psth_means = bfw.row_nanmean( psth_matrix, mean_I );
 
-peaks = find_first( above_std(psth_means, n_devs) );
+peaks = find_first( above_sem(psth_means, n_devs) );
 peaks(peaks == 0) = nan;
 peaks(~isnan(peaks)) = t(peaks(~isnan(peaks)));
 
 %%  plot histogram of latencies
 
 save_p = fullfile( eisg.util.project_path, 'data/plots/latency/hist', dsp3.datedir );
-do_save = false;
+do_save = true;
 
 plt_mask = pipe( rowmask(mean_labs) ...
   , @(m) intersect(m, find(~isnan(peaks))) ...
