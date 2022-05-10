@@ -32,6 +32,10 @@ bin_width = 0.05;
 t_win = [0, 0.5];
 t_mask = t >= t_win(1) & t < t_win(2);
 t_mean = mean( psth_matrix(:, t_mask), 2 );
+t_subset = psth_matrix(:, t_mask);
+
+discrim_x = t_mean; % use single value for each observation
+% discrim_x = t_subset; % use vector of values for each observation
 
 rois = combs( psth_labels, 'roi' );
 roi_pairs = bfw.pair_combination_indices( numel(rois) );
@@ -42,7 +46,7 @@ bs = arrayfun( @(x) rois{x}, roi_pairs(:, 2), 'un', 0 );
 % discriminate between a and b, for each a in as and b in bs
 each_I = findall( psth_labels, {'uuid', 'looks_by'} );
 [fit_res, fit_labels] = binary_fitcdiscrs( ...
-  t_mean, psth_labels, each_I, as, bs, 'roi' );
+  discrim_x, psth_labels, each_I, as, bs, 'roi' );
 
 %%  plot results
 

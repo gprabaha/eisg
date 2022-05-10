@@ -33,12 +33,12 @@ ind_aa = ind_a(randperm(numel(ind_a), num_a));
 ind_bb = ind_b(randperm(numel(ind_b), num_b));
 
 [train_Y, train_I] = combine_indices( ind_aa, ind_bb );
-train_X = data(train_I);
+train_X = data(train_I, :);
 
 rest_a = setdiff( ind_a, ind_aa );
 rest_b = setdiff( ind_b, ind_bb );
 [test_Y, test_I] = combine_indices( rest_a, rest_b );
-test_X = data(test_I);
+test_X = data(test_I, :);
 
 res = fitcdiscr( train_X, train_Y );
 pred = predict( res, test_X );

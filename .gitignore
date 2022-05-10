@@ -2,3 +2,5 @@ processed_data/
 data/
 polts/
 .DS_Store
+*.m~
+*.asv

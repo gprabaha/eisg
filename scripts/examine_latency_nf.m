@@ -32,9 +32,41 @@ n_devs = 5; % detect peak at first time above mean + std * n_devs
 [mean_labs, mean_I] = retaineach( psth_labels, {'uuid', 'looks_by', 'roi'} );
 psth_means = bfw.row_nanmean( psth_matrix, mean_I );
 
-peaks = find_first( above_sem(psth_means, n_devs) );
+peak_indices = find_first( above_sem(psth_means, n_devs) );
+peaks = peak_indices;
 peaks(peaks == 0) = nan;
 peaks(~isnan(peaks)) = t(peaks(~isnan(peaks)));
+
+%%  plot cumuluative histogram of latencies
+
+save_p = fullfile( eisg.util.project_path, 'data/plots/latency/cum_hist', dsp3.datedir );
+do_save = true;
+
+assert_ispair( peak_indices, mean_labs );
+peak_mat = to_peak_matrix( peak_indices, numel(t) );
+[lat_labs, lat_I] = retaineach( mean_labs, {'region', 'looks_by', 'cell-type', 'roi'} );
+peak_hist = to_histogram( peak_mat, lat_I );
+
+plt_mask = pipe( rowmask(lat_labs) ...
+  , @(m) findnone(lat_labs, '<cell-type>', m) ...
+);
+
+fig_I = findall( lat_labs, 'region', plt_mask );
+
+for i = 1:numel(fig_I)
+  fi = fig_I{i};
+  
+  pl = plotlabeled.make_common();
+  pl.x = t;
+  pcats = {'region', 'looks_by', 'roi'};
+  gcats = {'cell-type'};
+  axs = pl.lines( peak_hist(fi, :), lat_labs(fi), gcats, pcats );
+  shared_utils.plot.set_ylims( axs, [0, 1] );
+  
+  if ( do_save )
+    dsp3.req_savefig( gcf, save_p, prune(lat_labs(fi)), pcats );
+  end
+end
 
 %%  plot histogram of latencies
 

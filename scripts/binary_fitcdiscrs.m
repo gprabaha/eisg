@@ -1,6 +1,6 @@
 function [fit_tables, fit_labels] = binary_fitcdiscrs(data, labels, each_I, as, bs, label_category)
 
-validateattributes( data, {'double'}, {'column'}, mfilename, 'data' );
+assert_ispair( data, labels );
 
 if ( nargin < 6 )
   label_category = [];
@@ -11,7 +11,7 @@ assert( numel(as) == numel(bs) );
 fit_tables = cell( numel(each_I), 1 );
 fit_labels = cell( size(fit_tables) );
 
-parfor it = 1:numel(each_I)
+for it = 1:numel(each_I)
   shared_utils.general.progress( it, numel(each_I) );
   ei = each_I{it};
   
