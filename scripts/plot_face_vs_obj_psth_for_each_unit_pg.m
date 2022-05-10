@@ -1,4 +1,5 @@
 clear;
+clc;
 
 data_p = '/Users/prabaha/repositories/eisg/processed_data';
 
@@ -48,11 +49,14 @@ for i = 1:numel(fig_I)
   gcats = { 'roi' };
   pcats = {'uuid', 'cell-type', 'region'};  
   plt_labs = psth_labels(fi);
-  plt_dat = psth_matrix_10ms_nonoverlapping(fi, :);
+  plt_dat = psth_matrix_10ms_nonoverlapping(fi, :)./bin_width; % normalizing to get fr
   pl.x = t;
   pl.smooth_func = @(x) eisg.util.smoothen_psth_timecourse(x);
   pl.add_smoothing = true;
+  pl.add_errors = false;
   axs = pl.lines( plt_dat, plt_labs, gcats, pcats );
+  xlabel('Relative time (sec)');
+  ylabel('Firing rate (spikes/sec)');
   
   subdirs = combs( plt_labs, {'region', 'cell-type'} );
   reg_subdir = strjoin( subdirs(1, :), '_' );
@@ -64,14 +68,15 @@ for i = 1:numel(fig_I)
   end
 end
 
-%% make 50 ms overlapping PSTH with 10 ms stride
+%% make 50 ms sq wave overlapping PSTH with 10 ms stride
 
-psth_matrix_50ms_overlapping = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping_10ms_psth( psth_matrix_10ms_nonoverlapping );
+method = 'square_wave';
+psth_matrix_50ms_overlapping_sq_wave = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping_10ms_psth( psth_matrix_10ms_nonoverlapping, method );
 
 
-%% plot face and object psth for each cell without smoothing for 50ms overlapping psth
+%% plot face and object psth for each cell without smoothing for 50ms sq wave overlapping psth
 
-save_p = fullfile( eisg.util.project_path, 'plots/single_unit_psth_50ms_overlapping_without_smoothing/face_vs_obj' );
+save_p = fullfile( eisg.util.project_path, 'plots/single_unit_psth_50ms_sq_wave_overlapping_without_smoothing/face_vs_obj' );
 do_save = true;
 
 plt_mask = pipe( rowmask(psth_labels) ...
@@ -88,11 +93,53 @@ for i = 1:numel(fig_I)
   gcats = { 'roi' };
   pcats = {'uuid', 'cell-type', 'region'};  
   plt_labs = psth_labels(fi);
-  plt_dat = psth_matrix_50ms_overlapping(fi, :);
+  plt_dat = psth_matrix_50ms_overlapping_sq_wave(fi, :)./bin_width; % normalizing to get fr
   pl.x = t;
-  pl.smooth_func = @(x) eisg.util.smoothen_psth_timecourse(x);
-  pl.add_smoothing = true;
+  pl.add_errors = false;
   axs = pl.lines( plt_dat, plt_labs, gcats, pcats );
+  xlabel('Relative time (sec)');
+  ylabel('Firing rate (spikes/sec)');
+  
+  subdirs = combs( plt_labs, {'region', 'cell-type'} );
+  reg_subdir = strjoin( subdirs(1, :), '_' );
+  ct_subdir = strjoin( subdirs(2, :), '_' );
+  full_save_p = fullfile( save_p, reg_subdir, ct_subdir );
+  
+  if ( do_save )
+    dsp3.req_savefig( gcf, full_save_p, prune(plt_labs), [pcats, gcats] );
+  end
+end
+
+%% make 50 ms gaussian overlapping PSTH with 10 ms stride
+
+method = 'gaussian';
+psth_matrix_50ms_overlapping_gaussian = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping_10ms_psth( psth_matrix_10ms_nonoverlapping, method );
+
+%% plot face and object psth for each cell without smoothing for 50ms gaussian overlapping psth
+
+save_p = fullfile( eisg.util.project_path, 'plots/single_unit_psth_50ms_gaussian_overlapping_without_smoothing/face_vs_obj' );
+do_save = true;
+
+plt_mask = pipe( rowmask(psth_labels) ...
+  , @(m) findnone(psth_labels, '<cell-type>', m) ...
+);
+
+fig_I = findall( psth_labels, {'region', 'uuid'}, plt_mask );
+
+for i = 1:numel(fig_I)
+  fi = fig_I{i};
+  
+  pl = plotlabeled.make_common();
+  
+  gcats = { 'roi' };
+  pcats = {'uuid', 'cell-type', 'region'};  
+  plt_labs = psth_labels(fi);
+  plt_dat = psth_matrix_50ms_overlapping_gaussian(fi, :)./bin_width; % normalizing to get fr
+  pl.x = t;
+  pl.add_errors = false;
+  axs = pl.lines( plt_dat, plt_labs, gcats, pcats );
+  xlabel('Relative time (sec)');
+  ylabel('Firing rate (spikes/sec)');
   
   subdirs = combs( plt_labs, {'region', 'cell-type'} );
   reg_subdir = strjoin( subdirs(1, :), '_' );
@@ -134,9 +181,12 @@ for i = 1:numel(fig_I)
   gcats = { 'roi' };
   pcats = {'uuid', 'cell-type', 'region'};  
   plt_labs = psth_labels(fi);
-  plt_dat = psth_matrix_50ms_nonoverlapping(fi, :);
+  plt_dat = psth_matrix_50ms_nonoverlapping(fi, :)./bin_width; % normalizing to get fr
   pl.x = t;
+  pl.add_errors = false;
   axs = pl.lines( plt_dat, plt_labs, gcats, pcats );
+  xlabel('Relative time (sec)');
+  ylabel('Firing rate (spikes/sec)');
   
   subdirs = combs( plt_labs, {'region', 'cell-type'} );
   reg_subdir = strjoin( subdirs(1, :), '_' );
