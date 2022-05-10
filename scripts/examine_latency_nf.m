@@ -20,17 +20,20 @@ spk_mask = find( spike_labels, 'valid-unit' );
 
 min_t = -0.5;
 max_t = 0.5;
-bin_width = 0.05;
+bin_width = 0.01;
 
 [psth_matrix, psth_labels, t] = compute_psth(...
   spike_ts, spike_labels, spk_mask, evts, events.labels, evt_mask, min_t, max_t, bin_width );
 
+method = 'square_wave';
+psth_matrix_smoothened = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping_10ms_psth( psth_matrix, method );
+
 %%  mean psth + peak times
 
-n_devs = 5; % detect peak at first time above mean + std * n_devs
+n_devs = 4; % detect peak at first time above mean + std * n_devs
 
 [mean_labs, mean_I] = retaineach( psth_labels, {'uuid', 'looks_by', 'roi'} );
-psth_means = bfw.row_nanmean( psth_matrix, mean_I );
+psth_means = bfw.row_nanmean( psth_matrix_smoothened, mean_I );
 
 peak_indices = find_first( above_sem(psth_means, n_devs) );
 peaks = peak_indices;
@@ -58,8 +61,8 @@ for i = 1:numel(fig_I)
   
   pl = plotlabeled.make_common();
   pl.x = t;
-  pcats = {'region', 'looks_by', 'roi'};
-  gcats = {'cell-type'};
+  pcats = {'cell-type', 'region', 'looks_by'};
+  gcats = {'roi'};
   axs = pl.lines( peak_hist(fi, :), lat_labs(fi), gcats, pcats );
   shared_utils.plot.set_ylims( axs, [0, 1] );
   

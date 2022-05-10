@@ -34,8 +34,8 @@ t_mask = t >= t_win(1) & t < t_win(2);
 t_mean = mean( psth_matrix(:, t_mask), 2 );
 t_subset = psth_matrix(:, t_mask);
 
-discrim_x = t_mean; % use single value for each observation
-% discrim_x = t_subset; % use vector of values for each observation
+% discrim_x = t_mean; % use single value for each observation
+discrim_x = t_subset; % use vector of values for each observation
 
 rois = combs( psth_labels, 'roi' );
 roi_pairs = bfw.pair_combination_indices( numel(rois) );
