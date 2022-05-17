@@ -32,7 +32,8 @@ bin_width = 0.05;
 t_win = [0, 0.5];
 t_mask = t >= t_win(1) & t < t_win(2);
 t_mean = mean( psth_matrix(:, t_mask), 2 );
-t_subset = psth_matrix(:, t_mask);
+% t_subset = psth_matrix(:, t_mask);
+t_subset = psth_matrix;
 
 % discrim_x = t_mean; % use single value for each observation
 discrim_x = t_subset; % use vector of values for each observation
@@ -61,5 +62,5 @@ mask = findnone( fit_labels, {'<cell-type>'} );
 props = proportions( is_sig, prop_I );
 
 pl = plotlabeled.make_common();
-axs = pl.bar( props, prop_labs, {}, 'region', {'roi', 'looks_by', 'cell-type'} );
+axs = pl.bar( props, prop_labs, {}, 'cell-type', {'roi', 'looks_by', 'region'} );
 ylabel( axs(1), 'Prop Significant a vs b.' );

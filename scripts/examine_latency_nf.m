@@ -1,5 +1,6 @@
 data_p = '~/Downloads';
 
+%%
 sorted = shared_utils.io.fload( fullfile(data_p, 'sorted_neural_data_social_gaze.mat') );
 events = shared_utils.io.fload( fullfile(data_p, 'events.mat') );
 ct_labels = shared_utils.io.fload( fullfile(data_p, 'celltype_labels_combined.mat') );
