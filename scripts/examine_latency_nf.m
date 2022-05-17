@@ -20,7 +20,7 @@ spk_mask = find( spike_labels, 'valid-unit' );
 
 min_t = -0.5;
 max_t = 0.5;
-bin_width = 0.01;
+bin_width = 0.05;
 
 [psth_matrix, psth_labels, t] = compute_psth(...
   spike_ts, spike_labels, spk_mask, evts, events.labels, evt_mask, min_t, max_t, bin_width );
@@ -28,22 +28,51 @@ bin_width = 0.01;
 method = 'square_wave';
 psth_matrix_smoothened = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping_10ms_psth( psth_matrix, method );
 
-%%  mean psth + peak times
+%%  baseline psth stats
 
-n_devs = 4; % detect peak at first time above mean + std * n_devs
+% Because the baseline psth matrix would be too big to fit in memory,
+% process cells from one session at a time, keeping only the mean and sem
+% of spike counts from each cell.
+
+base_rois = { 'everywhere', 'right_nonsocial_object_whole_face_matched', 'whole_face' };
+
+evt_mask = find( events.labels, [{'m1'}, base_rois] );
+spk_mask = find( spike_labels, 'valid-unit' );
+
+if ( 0 )  % debug - process only one session
+  evt_mask = find( events.labels, '01082019', evt_mask );
+end
+
+[base_stats, base_stat_labs] = baseline_psth_stats( ...
+  evts, events.labels, evt_mask, spike_ts, spike_labels, spk_mask ...
+  , 'min_t', min_t ...
+  , 'max_t', max_t ...
+  , 'bin_width', bin_width ...
+);
+
+%%  mean psth
 
 [mean_labs, mean_I] = retaineach( psth_labels, {'uuid', 'looks_by', 'roi'} );
 psth_means = bfw.row_nanmean( psth_matrix_smoothened, mean_I );
 
+%%  peak times from rows
+
+n_devs = 4; % detect peak at first time above mean + std * n_devs
 peak_indices = find_first( above_sem(psth_means, n_devs) );
-peaks = peak_indices;
-peaks(peaks == 0) = nan;
-peaks(~isnan(peaks)) = t(peaks(~isnan(peaks)));
+peaks = to_peak_times( peak_indices, t );
+
+%%  peak times from baseline
+
+n_devs = 4; % detect peak at first time above mean + std * n_devs
+peak_I = bfw.find_combinations( base_stat_labs, mean_labs(:, 'uuid')' );
+above_base = above_sems( psth_means, peak_I, base_stats(:, 1), base_stats(:, 2), n_devs );
+peak_indices = find_first( above_base );
+peaks = to_peak_times( peak_indices, t );
 
 %%  plot cumuluative histogram of latencies
 
 save_p = fullfile( eisg.util.project_path, 'data/plots/latency/cum_hist', dsp3.datedir );
-do_save = true;
+do_save = false;
 
 assert_ispair( peak_indices, mean_labs );
 peak_mat = to_peak_matrix( peak_indices, numel(t) );
@@ -101,4 +130,57 @@ for i = 1:numel(fig_I)
   if ( do_save )
     dsp3.req_savefig( gcf, save_p, prune(plt_labs), pcats );
   end
+end
+
+%%
+
+function peaks = to_peak_times(peak_indices, t)
+
+peaks = peak_indices;
+peaks(peaks == 0) = nan;
+peaks(~isnan(peaks)) = t(peaks(~isnan(peaks)));
+
+end
+
+function [base_stats, base_stat_labs] = baseline_psth_stats(...
+  evts, evt_labels, evt_mask, spike_ts, spike_labels, spk_mask, varargin)
+
+defaults = struct();
+defaults.min_t = -0.5;
+defaults.max_t = 0.5;
+defaults.bin_width = 0.05;
+
+params = shared_utils.general.parsestruct( defaults, varargin );
+
+base_stats = [];
+base_stat_labs = fcat();
+
+[evt_I, evt_C] = findall( evt_labels, 'session', evt_mask );
+for i = 1:numel(evt_I)
+  fprintf( '\n Session %s (%d of %d)', evt_C{i}, i, numel(evt_I) );
+  
+  sesh_evt_mask = evt_I{i};
+  sesh_spk_mask = find( spike_labels, evt_C(:, i), spk_mask );
+  spk_I = findall( spike_labels, 'uuid', sesh_spk_mask );
+  spk_Is = shared_utils.vector.bin( spk_I, 4 );
+  
+  for j = 1:numel(spk_Is)
+    fprintf( '\n\t Group (%d of %d)', j, numel(spk_Is) );
+    
+    si = vertcat( spk_Is{j}{:} );
+    [base_psth_matrix, base_psth_labels, ~] = compute_psth(...
+      spike_ts, spike_labels, si, evts, evt_labels, sesh_evt_mask ...
+      , params.min_t, params.max_t, params.bin_width );
+    
+    [unit_labs, unit_I] = retaineach( base_psth_labels, {'uuid', 'looks_by'} );
+
+  %   sigmas = cellfun( @(x) std(columnize(base_psth_matrix(x))), unit_I );
+    sigmas = cellfun( @(x) sem_all(columnize(base_psth_matrix(x))), unit_I );
+    means = cellfun( @(x) mean(columnize(base_psth_matrix(x))), unit_I );
+    base_stats = [ base_stats; [means, sigmas] ];
+
+    append( base_stat_labs, unit_labs );
+  end
+end
+
 end
