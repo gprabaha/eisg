@@ -1,3 +1,20 @@
+
+data_p = '/gpfs/milgram/project/chang/pg496/';
+
+sorted = shared_utils.io.fload( fullfile(data_p, 'sorted_neural_data_social_gaze.mat') );
+events = shared_utils.io.fload( fullfile(data_p, 'events.mat') );
+
+%%
+[unit_spike_ts, unit_wfs, spike_labels] = linearize_sorted( sorted );
+bfw.add_monk_labels( spike_labels );
+
+%%
+events = add_whole_face_whole_object_rois( events );
+evts = bfw.event_column( events, 'start_time' );
+
+%%
+
+
 repadd( 'chronux', true );
 repadd( 'bfw/script' );
 
@@ -7,7 +24,7 @@ end
 
 %%
 
-conf = bfw.set_dataroot( '/Users/prabaha/repositories/bfw/data' );
+conf = bfw.set_dataroot( '/gpfs/milgram/project/chang/CHANG_LAB/naf3/Data/brains/free_viewing' );
 
 %%
 % [unit_spike_ts, unit_wfs, spike_labels] = linearize_sorted( sorted );
@@ -17,7 +34,7 @@ conf = bfw.set_dataroot( '/Users/prabaha/repositories/bfw/data' );
 lfp_p = bfw.gid( 'lfp', conf );
 
 % change here to update output path
-base_dst_p = bfw.gid( 'sfcoherence', conf );
+base_dst_p = '/gpfs/milgram/project/chang/pg496/social_gaze_sfcoherence';
 
 lfp_files = shared_utils.io.findmat( lfp_p );
 [ps, exists] = bfw.match_files( lfp_files ...
