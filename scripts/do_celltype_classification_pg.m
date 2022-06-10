@@ -322,11 +322,11 @@ end
 
 unit_mask = find( spike_labels, validity_filter );
 [regional_unit_inds, regions] = findall( spike_labels, 'region', unit_mask );
-subset_inds = regional_unit_inds;
+subset_inds = { regional_unit_inds{1}; vertcat( regional_unit_inds{2:4} ) };
 
 features_mask = find( feature_labels, validity_filter );
 [regional_feature_inds, regions] = findall( feature_labels, 'region', features_mask );
-feature_subset_inds = regional_feature_inds;
+feature_subset_inds = { regional_feature_inds{1}; vertcat( regional_feature_inds{2:4} ) }; 
 
 % get indices for p2v values for the wfs
 p2v_inds = cellfun( @(x) find(feature_labels, 'peak_to_valley', x), feature_subset_inds, 'un', 0 );

@@ -24,7 +24,7 @@ else
   mat_for_kmeans_classification = class_feature_matrix;
 end
   
-unit_celltypes = repmat({'<cell-type>'}, size(mat_for_kmeans_classification, 1), 1);
+unit_celltypes = repmat({'<cell-type'}, size(mat_for_kmeans_classification, 1), 1);
 celltype_labels = class_feature_labels;
 
 datanonnorm4Cluster = standardization(mat_for_kmeans_classification);
