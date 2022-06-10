@@ -4,8 +4,8 @@ data_p = '~/Downloads';
 sorted = shared_utils.io.fload( fullfile(data_p, 'sorted_neural_data_social_gaze.mat') );
 events = shared_utils.io.fload( fullfile(data_p, 'events.mat') );
 ct_labels = shared_utils.io.fload( fullfile(data_p, 'celltype_labels_combined.mat') );
-
-[spike_ts, spike_labels] = linearize_sorted( sorted );
+%%
+[unit_spike_ts, unit_wfs, spike_labels] = linearize_sorted( sorted );
 spike_labels = apply_cell_type_labels(...
   spike_labels, ct_labels.label_mat, ct_labels.label_mat_cols );
 
@@ -17,14 +17,14 @@ evts = bfw.event_column( events, 'start_time' );
 rois = {'whole_face', 'right_nonsocial_object_whole_face_matched'};
 
 evt_mask = find( events.labels, [{'m1'}, rois] );
-spk_mask = find( spike_labels, 'valid-unit' );
+spk_mask = find( spike_labels, {'valid-unit', 'maybe-valid-unit'} );
 
 min_t = -0.5;
 max_t = 0.5;
-bin_width = 0.05;
+bin_width = 0.01;
 
 [psth_matrix, psth_labels, t] = compute_psth(...
-  spike_ts, spike_labels, spk_mask, evts, events.labels, evt_mask, min_t, max_t, bin_width );
+  unit_spike_ts, spike_labels, spk_mask, evts, events.labels, evt_mask, min_t, max_t, bin_width );
 
 method = 'square_wave';
 psth_matrix_smoothened = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping_10ms_psth( psth_matrix, method );
@@ -35,21 +35,37 @@ psth_matrix_smoothened = eisg.util.get_overlapping_50ms_psth_from_nonoverlapping
 % process cells from one session at a time, keeping only the mean and sem
 % of spike counts from each cell.
 
-base_rois = { 'everywhere', 'right_nonsocial_object_whole_face_matched', 'whole_face' };
+% base_rois = { 'everywhere', 'right_nonsocial_object_whole_face_matched', 'whole_face' };
+% base_rois = { 'right_nonsocial_object_whole_face_matched', 'whole_face' };
+base_rois = { 'everywhere' };
 
 evt_mask = find( events.labels, [{'m1'}, base_rois] );
-spk_mask = find( spike_labels, 'valid-unit' );
+spk_mask = find( spike_labels, {'valid-unit', 'maybe-valid-unit'} );
 
 if ( 0 )  % debug - process only one session
   evt_mask = find( events.labels, '01082019', evt_mask );
 end
+% 
+% [base_stats, base_stat_labs] = baseline_psth_stats( ...
+%   evts, events.labels, evt_mask, spike_ts, spike_labels, spk_mask ...
+%   , 'min_t', min_t ...
+%   , 'max_t', max_t ...
+%   , 'bin_width', bin_width ...
+% );
 
-[base_stats, base_stat_labs] = baseline_psth_stats( ...
-  evts, events.labels, evt_mask, spike_ts, spike_labels, spk_mask ...
+[base_stats2, base_stat_labs] = baseline_psth_stats( ...
+  evts, events.labels, evt_mask, unit_spike_ts, spike_labels, spk_mask ...
   , 'min_t', min_t ...
   , 'max_t', max_t ...
   , 'bin_width', bin_width ...
 );
+
+%%
+
+pl = plotlabeled.make_common();
+base_stat_labs = apply_cell_type_labels(base_stat_labs, ct_labels.label_mat, ct_labels.label_mat_cols);
+% axs = pl.violinplot( base_stats(:, 1), base_stat_labs, {'cell-type'}, 'region' );
+axs = pl.violinplot( base_stats2(:, 1), base_stat_labs, {'cell-type'}, 'region' );
 
 %%  mean psth
 
@@ -169,9 +185,12 @@ for i = 1:numel(evt_I)
     fprintf( '\n\t Group (%d of %d)', j, numel(spk_Is) );
     
     si = vertcat( spk_Is{j}{:} );
-    [base_psth_matrix, base_psth_labels, ~] = compute_psth(...
+    % changes made here
+    [base_psth_matrix, base_psth_labels, t] = compute_psth(...
       spike_ts, spike_labels, si, evts, evt_labels, sesh_evt_mask ...
       , params.min_t, params.max_t, params.bin_width );
+    time_snippet = t >= 0.05 & t < 0.4;
+    base_psth_matrix = mean( base_psth_matrix( :, time_snippet), 2 );
     
     [unit_labs, unit_I] = retaineach( base_psth_labels, {'uuid', 'looks_by'} );
 
