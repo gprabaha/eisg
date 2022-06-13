@@ -4,3 +4,4 @@ polts/
 .DS_Store
 *.m~
 *.asv
+*.out

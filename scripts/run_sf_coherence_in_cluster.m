@@ -1,4 +1,21 @@
 
+%%
+
+addpath( '/gpfs/milgram/project/chang/pg496/repositories/mpaths' );
+
+repadd( 'chronux', true );
+repadd( 'dsp3', true );
+repadd( 'bfw', true );
+repadd( 'eisg', true );
+repadd( 'categorical', true );
+repadd( 'shared_utils', true);
+
+% if ( isempty(gcp('nocreate')) )
+%   parpool( feature('numcores') );
+% end
+
+%%
+
 data_p = '/gpfs/milgram/project/chang/pg496/';
 
 sorted = shared_utils.io.fload( fullfile(data_p, 'sorted_neural_data_social_gaze.mat') );
@@ -14,16 +31,6 @@ evts = bfw.event_column( events, 'start_time' );
 
 %%
 
-
-repadd( 'chronux', true );
-repadd( 'bfw/script' );
-
-if ( isempty(gcp('nocreate')) )
-  parpool( feature('numcores') );
-end
-
-%%
-
 conf = bfw.set_dataroot( '/gpfs/milgram/project/chang/CHANG_LAB/naf3/Data/brains/free_viewing' );
 
 %%
@@ -34,16 +41,17 @@ conf = bfw.set_dataroot( '/gpfs/milgram/project/chang/CHANG_LAB/naf3/Data/brains
 lfp_p = bfw.gid( 'lfp', conf );
 
 % change here to update output path
-base_dst_p = '/gpfs/milgram/project/chang/pg496/social_gaze_sfcoherence';
+base_dst_p = '/gpfs/milgram/project/chang/pg496/social_gaze_sfcoherence_all_pairs';
 
 lfp_files = shared_utils.io.findmat( lfp_p );
 [ps, exists] = bfw.match_files( lfp_files ...
   , bfw.gid('meta', conf) ...
 );
 
+
 to_process = ps(all(exists, 2), :);
 
-to_process = to_process(1, :);
+to_process = to_process(to_process_inds, :);
 
 rois = { 'eyes_nf', 'face', 'right_nonsocial_object', 'right_nonsocial_object_eyes_nf_matched' };
 
@@ -77,12 +85,14 @@ for i = 1:size(to_process, 1)
   
   %%
   
-  pairs = bfw.matching_pairs( spk_regs, lfp_regs )';
+  % pairs = bfw.matching_pairs( spk_regs, lfp_regs )';
+  pairs = dsp3.numel_combvec( spk_regs, lfp_regs )';
 %   pairs = pairs(1:8, :);
-  pairs = at_most_n_lfp_channels( pairs, 1 );
+%   pairs = at_most_n_lfp_channels( pairs, 1 );
 %   pairs = pairs(1:2, :);
   
-  chan_inds = to_within_region_channel_indices( lfp_file.key );
+  % chan_inds = to_within_region_channel_indices( lfp_file.key );
+  chan_inds = ( 1:size( lfp_file.key, 1 ) )';
   chan_inds = chan_inds(~ref_ind, :);
   lfp_labels(:, end+1) = arrayfun( @(x) sprintf('maxchn-%d', x), chan_inds, 'un', 0 );
   
@@ -118,7 +128,7 @@ for i = 1:size(to_process, 1)
     if ( 1 )
       dst_file_path = fullfile( base_dst_p, rois{j}, meta_file.unified_filename );
       shared_utils.io.require_dir( fileparts(dst_file_path) );
-      shared_utils.io.psave( dst_file_path, dst_file );
+      shared_utils.io.psave( dst_file_path, dst_file, '-v7.3' );
     end
   end
   
