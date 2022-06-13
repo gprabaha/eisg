@@ -29,14 +29,14 @@ coh = vertcat( coh{:} );
 assert_ispair( coh, coh_labels );
 
 if ( isempty(f) )
-  f = [];
+    f = [];
+    t = [];
 else
-  f = f{1};
-end
-if ( isempty(t) )
-  t = [];
-else
-  t = t{1};
+    nonempties = ~cellfun( 'isempty', f );
+    if nnz(nonempties) > 0
+      f = f{find(nonempties, 1)};
+      t = t{find(nonempties, 1)};
+    end
 end
 
 end
