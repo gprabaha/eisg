@@ -74,14 +74,15 @@ list_of_all_features = {
     'recovery_slope', ...
     'repolarization_slope'
 };
-feature_list = {'peak_to_valley', 'halfwidth'};
+feature_list = {'peak_to_valley'};
 validity_filter = {'valid-unit', 'maybe-valid-unit'};
 
 % get the specified features for each region
 num_features = numel( feature_list );
 features_mask = find( feature_labels, [feature_list, validity_filter] );
 [regional_feature_inds, regions] = findall( feature_labels, 'region', features_mask );
-subset_inds = regional_feature_inds;
+% subset_inds = regional_feature_inds;
+subset_inds = { regional_feature_inds{1}; vertcat(regional_feature_inds{2:4}) };
 
 % get indices for p2v values for the wfs
 p2v_inds = cellfun( @(x) find(feature_labels, 'peak_to_valley', x), subset_inds, 'un', 0 );
@@ -92,6 +93,8 @@ use_pca = true;
 % do the k-means celltype classification
 [celltype_labels, feature_mat]= eisg.celltype_class.do_feature_based_wf_class_for_each_subset(...
   unit_wf_features, feature_labels, subset_inds, num_features, p2v_inds, n_cluster_range, use_pca);
+
+save(fullfile( [ data_p 'celltype_labels_p2v_combined.mat']), celltype_labels);
 
 %% Plot wfs of celltypes across regions
 
