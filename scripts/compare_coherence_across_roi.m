@@ -1,5 +1,5 @@
-%data_p = '/Volumes/ExtSSD/social_gaze_spike_phase_coherence/';
-data_p = '/gpfs/milgram/project/chang/pg496/social_gaze_sfcoherence';
+data_p = '/Volumes/ExtSSD/social_gaze_spike_phase_coherence_all/';
+%data_p = '/gpfs/milgram/project/chang/pg496/social_gaze_sfcoherence';
 
 roi = { 'face', 'eyes_nf', 'right_nonsocial_object' };
 roi_ms = shared_utils.io.findmat( fullfile(data_p, roi) );
@@ -8,12 +8,6 @@ roi_ms = shared_utils.io.findmat( fullfile(data_p, roi) );
 mean_each = { 'region', 'looks_by', 'roi', 'channel', 'uuid' };
 
 [coh, coh_labels, f, t] = load_tf_measure( roi_ms, mean_each );
-
-%%
-
-coh_file = load( '/Volumes/ExtSSD/social_gaze_spike_phase_coherence/face/01142019_position_9.mat' );
-coh_labels = fcat.from( coh_file.var );
-coh = coh_file.var.coh;
 
 %%
 
@@ -32,25 +26,40 @@ end
 %%
 
 [~, transform_ind] = bfw.make_whole_face_roi( coh_labels );
-coh = coh(transform_ind, :, :);
+coh_updated = coh(transform_ind, :, :);
 
 %%
 
-plt_coh = coh;
+plt_coh = coh_updated;
 plt_labels = coh_labels;
 
 mask = pipe( rowmask(plt_labels) ...
   , @(m) find(plt_labels, 'm1', m) ...
   , @(m) findnone(plt_labels, '<cell-type>', m) ...
   , @(m) findnone(plt_labels, 'b', m) ...
-  , @(m) findnone(plt_labels, {'face', 'eyes_nf'}, m) ...
 );
 
 plt_coh = plt_coh(mask, :, :);
 plt_labels = plt_labels(mask);
 
-pl = plotlabeled.make_spectrogram( f, t );
-pl.imagesc( plt_coh, plt_labels, {'roi', 'region', 'cell-type'} );
+%%
+
+[uuid_I, uuid_C] = findall( plt_labels, 'uuid');
+
+% figure_path = '/Users/prabaha/repositories/eisg/data/plots/coherence_per_unit';
+figure_path = '../plots/coherence_per_unit';
+
+for i=1:numel(uuid_I)
+  fprintf( '%d of %d\n', i, numel(uuid_I) );
+  pl = plotlabeled.make_spectrogram( f, t );
+  
+  uuid_labs = prune( plt_labels(uuid_I{i}) );
+  subdirs = strjoin( columnize(combs(uuid_labs, 'region')), '_' );
+  
+  pl.imagesc( plt_coh(uuid_I{i}, :, :), uuid_labs, {'roi', 'region', 'cell-type', 'uuid'} );  
+  dsp3.req_savefig(gcf, fullfile(figure_path, subdirs), uuid_labs, {'roi', 'region', 'cell-type', 'uuid'});
+end
+
 
 %%
 
