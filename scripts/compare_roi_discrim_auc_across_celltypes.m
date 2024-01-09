@@ -4,13 +4,16 @@ clear;
 
 %% Script Parameters
 do_psth_extraction = false;
-smoothen_psth = true;
+smoothen_psth = true; % This is a nontrivial thing
 
 % Validity filter for units
 validity_filter = {'valid-unit', 'maybe-valid-unit'};
 
 % For plotting
 excluded_categories = {'outlier', 'ofc', 'dmpfc'};
+
+% AUC/unit subplots
+unit_auc_comparison_subplots = {'pre', 'post', 'total time'};
 
 %% Loading Data
 disp('Loading data...')
@@ -89,24 +92,72 @@ else
     disp('Using raw PSTH without smoothening...');
 end
 
-%% Face vs Obj AUC Calculation
+%% Face vs Obj AUC
+% Calculating the AUC values
 roi_a = 'whole_face';
 roi_b = 'right_nonsocial_object_whole_face_matched';
 [auc_f_o, z_scored_auc_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
     psth_matrix, psth_labels, roi_a, roi_b...
     );
 
-%% Plot Face vs Obj AUC Timeseries for ACCg
+% Analyze for ACC
 region = 'acc';
+
+% Ploting Face vs Obj AUC Timeseries
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
     t, z_scored_auc_f_o, auc_labels_f_o, region, excluded_categories);
-sgtitle(['Face vs Obj AUC Timeseries for: ' region]);
+sgtitle(['Face vs Obj AUC Timeseries for: ' region]); drawnow;
 
-%% Plot Face vs Obj AUC Timeseries for BLA
+% Compare mean AUC/Unit: ACC
+
+% Here, generate subplots based on unit_auc_comparison_subplots which kinda
+% would indicate the time period for which to calculate the means for. We
+% are trying out pre-, post- and total time period for mean AUC/unit
+% calculations. Then we can generate violinplots using the template shown
+% in the sandbox below
+
+% function violinplot_compare_mean_auc_per_unit
+
+%% Sandbox
+
+% Sample data generation
+data1 = randn(100, 1);
+data2 = randn(100, 1) + 2;
+categories = {'Group 1', 'Group 2'};
+
+% Plotting the violin plot
+figure;
+
+% Using violinplot function for simplicity
+violins = violinplot([data1, data2], categories, 'ShowData', true);
+
+% Customizing the plot (optional)
+title('Sample Violin Plot');
+xlabel('Groups');
+ylabel('Data Values');
+
+%% Functions
+
+function violinplot_compare_mean_auc_per_unit
+
+
+
+
+end
+
+
+
+
+
+
+%{
+% Ploting Face vs Obj AUC Timeseries for BLA
 region = 'bla';
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
     t, z_scored_auc_f_o, auc_labels_f_o, region, excluded_categories);
-sgtitle(['Face vs Obj AUC Timeseries for: ' region]);
+sgtitle(['Face vs Obj AUC Timeseries for: ' region]); drawnow;
+
+
 
 %% Eyes vs Non-eye Face AUC Calculation
 roi_a = 'eyes_nf';
@@ -119,14 +170,14 @@ roi_b = 'face';
 region = 'acc';
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
     t, z_scored_auc_enf_f, auc_labels_enf_f, region, excluded_categories);
-sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]);
+sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]); drawnow;
 
 %% Plot Eyes vs Non-eye Face AUC Timeseries for BLA
 region = 'bla';
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
     t, z_scored_auc_enf_f, auc_labels_enf_f, region, excluded_categories);
-sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]);
- 
+sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]); drawnow;
+ }%
 
 %{
 %% Mean AUC/unit comparison: ACC and BLA

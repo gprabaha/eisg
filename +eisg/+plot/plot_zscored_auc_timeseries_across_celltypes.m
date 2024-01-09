@@ -24,9 +24,9 @@ for i = 1:numel(axs)
   colorbar( axs(i) );
   set( axs(i), 'clim', [0, max(max(abs(z_scored_aucs)))] );
   if strcmp(C{i}, 'narrow')
-      custom_map = custom_broad_map;
-  elseif strcmp(C{i}, 'broad')
       custom_map = custom_narrow_map;
+  elseif strcmp(C{i}, 'broad')
+      custom_map = custom_broad_map;
   else
       error_message = sprintf('No colormap for celltype: %s', char(C{i}));
       error(error_message);
@@ -35,6 +35,5 @@ for i = 1:numel(axs)
   title( axs(i), strrep(fcat.strjoin(C(:, i), ' | '), '_', ' ') );
 end
 set(gcf, 'Position',  [200, 200, 900, 500]);
-
 end 
 

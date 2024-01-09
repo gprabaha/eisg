@@ -14,11 +14,10 @@ fprintf('Calculating for unit: ');
 parfor i = 1:numel(unit_I)
     if mod(i, 20) ~= 0
         fprintf('%d ', i);
-        drawnow;
     else
         fprintf('%d \n', i);
-        drawnow;
     end
+    drawnow;
     ind_a = find( psth_labels, roi_a, unit_I{i} );
     ind_b = find( psth_labels, roi_b, unit_I{i} );
     aucs(i, :) = auc_over_time( psth_matrix, ind_a, ind_b ); 
