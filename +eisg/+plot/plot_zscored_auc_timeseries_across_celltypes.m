@@ -12,27 +12,25 @@ custom_narrow_map = [linspace(1, 0, 100)', linspace(1, 0.3294, 100)', linspace(1
 custom_broad_map = [linspace(1, 0.7804, 100)', linspace(1, 0.3216, 100)', linspace(1, 0.1647, 100)']; % Kinda orange #c7522a
 
 [I, C] = findall( auc_labels, {'cell-type'}, unit_mask );
-figure();
 axs = plots.panels( numel(I) );
-
 for i = 1:numel(axs)
-  ind = I{i};
-  abs_zscore_auc_subset = abs_zscored_auc(ind,:);
-  [~, max_auc_loc] = max( abs_zscore_auc_subset, [], 2);
-  [~,sorted_ind] = sort( max_auc_loc );
-  imagesc( axs(i), t, 1:numel(ind), abs_zscore_auc_subset(sorted_ind, :) );
-  colorbar( axs(i) );
-  set( axs(i), 'clim', [0, max(max(abs(z_scored_aucs)))] );
-  if strcmp(C{i}, 'narrow')
+    ind = I{i};
+    abs_zscore_auc_subset = abs_zscored_auc(ind,:);
+    [~, max_auc_loc] = max( abs_zscore_auc_subset, [], 2);
+    [~,sorted_ind] = sort( max_auc_loc );
+    imagesc( axs(i), t, 1:numel(ind), abs_zscore_auc_subset(sorted_ind, :) );
+    colorbar( axs(i) );
+    set( axs(i), 'clim', [0, max(max(abs(z_scored_aucs)))] );
+    if strcmp(C{i}, 'narrow')
       custom_map = custom_narrow_map;
-  elseif strcmp(C{i}, 'broad')
+    elseif strcmp(C{i}, 'broad')
       custom_map = custom_broad_map;
-  else
+    else
       error_message = sprintf('No colormap for celltype: %s', char(C{i}));
       error(error_message);
-  end
-  colormap( axs(i), custom_map );
-  title( axs(i), strrep(fcat.strjoin(C(:, i), ' | '), '_', ' ') );
+    end
+    colormap( axs(i), custom_map );
+    title( axs(i), strrep(fcat.strjoin(C(:, i), ' | '), '_', ' ') );
 end
 set(gcf, 'Position',  [200, 200, 900, 500]);
 end 

@@ -4,8 +4,9 @@ clear;
 
 %% Script Parameters
 do_psth_extraction = false;
-recalculate_auc = true;
+recalculate_auc = false;
 smoothen_psth = true; % This is a nontrivial thing
+print_stats = true;
 
 % Validity filter for units
 validity_filter = {'valid-unit', 'maybe-valid-unit'};
@@ -15,6 +16,8 @@ excluded_categories = {'outlier', 'ofc', 'dmpfc'};
 
 % AUC/unit subplots
 unit_auc_comparison_subplots = {'pre', 'post', 'total time'};
+pre_time_range = [-0.5 0]; % in seconds
+post_time_range = [0 0.5];
 
 %% Loading Data
 disp('Loading data...')
@@ -97,238 +100,89 @@ end
 roi_a = 'whole_face';
 roi_b = 'right_nonsocial_object_whole_face_matched';
 if recalculate_auc
-    [auc_f_o, z_scored_auc_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
+    [auc_f_o, z_scored_aucs_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
         psth_matrix, psth_labels, roi_a, roi_b...
         );
-    save( fullfile(data_p, 'face_obj_comparison_auc_values.mat'), 'auc_f_o', 'z_scored_auc_f_o', 'auc_labels_f_o' );
+    save( fullfile(data_p, 'face_obj_comparison_auc_values.mat'), 'auc_f_o', 'z_scored_aucs_f_o', 'auc_labels_f_o' );
 else
     load( fullfile(data_p, 'face_obj_comparison_auc_values.mat') );
 end
 
+%% Plot and Compare AUC
 % Analyze for ACC
 region = 'acc';
 
 % Ploting Face vs Obj AUC Timeseries
+figure();
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
-    t, z_scored_auc_f_o, auc_labels_f_o, region, excluded_categories);
+    t, z_scored_aucs_f_o, auc_labels_f_o, region, excluded_categories);
 sgtitle(['Face vs Obj AUC Timeseries for: ' region]); drawnow;
 
-% Compare mean AUC/Unit: ACC
+% Plotting mean AUC/unit violinplots
+figure();
+eisg.plot.violinplot_compare_mean_auc_per_unit(t, z_scored_aucs_f_o,...
+    auc_labels_f_o, region, excluded_categories,...
+    unit_auc_comparison_subplots, pre_time_range, post_time_range, print_stats);
+sgtitle(['Face vs Obj AUC/unit comparison across celltypes for: ' region]); drawnow;
 
-% Here, generate subplots based on unit_auc_comparison_subplots which kinda
-% would indicate the time period for which to calculate the means for. We
-% are trying out pre-, post- and total time period for mean AUC/unit
-% calculations. Then we can generate violinplots using the template shown
-% in the sandbox below
-
-% function violinplot_compare_mean_auc_per_unit
-
-%% Sandbox
-
-% Sample data generation
-data1 = randn(100, 1);
-data2 = randn(100, 1) + 2;
-categories = {'Group 1', 'Group 2'};
-
-% Plotting the violin plot
-figure;
-
-% Using violinplot function for simplicity
-violins = violinplot([data1, data2], categories, 'ShowData', true);
-
-% Customizing the plot (optional)
-title('Sample Violin Plot');
-xlabel('Groups');
-ylabel('Data Values');
-
-%{
-%% Functions
-
-function violinplot_compare_mean_auc_per_unit(z_scored_auc, auc_labels,...
-    unit_auc_comparison_subplots)
-
-
-
-
-end
-
-%}
-
-
-
-%{
-% Ploting Face vs Obj AUC Timeseries for BLA
+% Analyze for BLA
 region = 'bla';
+
+% Ploting Face vs Obj AUC Timeseries
+figure();
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
-    t, z_scored_auc_f_o, auc_labels_f_o, region, excluded_categories);
+    t, z_scored_aucs_f_o, auc_labels_f_o, region, excluded_categories);
 sgtitle(['Face vs Obj AUC Timeseries for: ' region]); drawnow;
 
+% Plotting mean AUC/unit violinplots
+figure();
+eisg.plot.violinplot_compare_mean_auc_per_unit(t, z_scored_aucs_f_o,...
+    auc_labels_f_o, region, excluded_categories,...
+    unit_auc_comparison_subplots, pre_time_range, post_time_range, print_stats);
+sgtitle(['Face vs Obj AUC/unit comparison across celltypes for: ' region]); drawnow;
 
-
-%% Eyes vs Non-eye Face AUC Calculation
+%% EyeNF vs Face AUC
+% Calculating the AUC values
 roi_a = 'eyes_nf';
 roi_b = 'face';
-[auc_enf_f, z_scored_auc_enf_f, auc_labels_enf_f] = eisg.auc.calculate_roi_comparison_auc(...
-    psth_matrix, psth_labels, roi_a, roi_b...
-    );
-
-%% Plot Eyes vs Non-eye Face AUC Timeseries for ACCg
-region = 'acc';
-eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
-    t, z_scored_auc_enf_f, auc_labels_enf_f, region, excluded_categories);
-sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]); drawnow;
-
-%% Plot Eyes vs Non-eye Face AUC Timeseries for BLA
-region = 'bla';
-eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
-    t, z_scored_auc_enf_f, auc_labels_enf_f, region, excluded_categories);
-sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]); drawnow;
-
-
-%% Mean AUC/unit comparison: ACC and BLA
-
-% Calculate mean and SEM for ACC
-mean_acc_broad = nanmedian( nanmean( abs_zscore_auc_broad{2}, 2 ) );
-sem_acc_broad = sem( nanmean( abs_zscore_auc_broad{2}, 2 ) );
-mean_acc_narrow = nanmedian( nanmean(abs_zscore_auc_narrow{2}, 2 ) );
-sem_acc_narrow = sem( nanmean( abs_zscore_auc_narrow{2}, 2 ) );
-
-% Calculate mean and SEM for BLA
-mean_bla_broad = nanmedian( nanmean(abs_zscore_auc_broad{1}, 2 ) );
-sem_bla_broad = sem(nanmean( abs_zscore_auc_broad{1}, 2) );
-mean_bla_narrow = nanmedian( nanmean(abs_zscore_auc_narrow{1}, 2 ) );
-sem_bla_narrow = sem(nanmean( abs_zscore_auc_narrow{1}, 2) );
-
-% Bar graph parameters
-means_acc = [mean_acc_broad, mean_acc_narrow];
-sems_acc = [sem_acc_broad, sem_acc_narrow];
-means_bla = [mean_bla_broad, mean_bla_narrow];
-sems_bla = [sem_bla_broad, sem_bla_narrow];
-xticklabels = {'ACC', 'BLA'};
-
-% Create figure
-figure;
-
-% Plot means for ACC
-bar(1, means_acc(1), 'BarWidth', 0.5, 'FaceColor', 'r');
-hold on;
-bar(2, means_acc(2), 'BarWidth', 0.5, 'FaceColor', 'b');
-
-% Plot means for BLA
-bar(4, means_bla(1), 'BarWidth', 0.5, 'FaceColor', 'r');
-bar(5, means_bla(2), 'BarWidth', 0.5, 'FaceColor', 'b');
-hold off;
-
-% Plot standard errors for ACC
-hold on;
-errorbar([1, 2], means_acc, sems_acc, 'k.', 'LineWidth', 1, 'CapSize', 10);
-
-% Plot standard errors for BLA
-errorbar([4, 5], means_bla, sems_bla, 'k.', 'LineWidth', 1, 'CapSize', 10);
-hold off;
-
-% Customize the plot
-title('Mean AUC/unit Comparison - Broad vs Narrow');
-xlabel('Category');
-ylabel('Mean AUC');
-legend('Broad', 'Narrow', 'Location', 'best');
-set(gca, 'XTick', [1.5, 4.5], 'XTickLabel', xticklabels);
-grid on;
-
-
-% Check the stats
-p_acc = ranksum( nanmedian( abs_zscore_auc_broad{2} ), nanmedian( abs_zscore_auc_narrow{2} ) );
-median_acc_broad = nanmedian( nanmean( abs_zscore_auc_broad{2}, 2 ) );
-median_acc_narrow = nanmedian( nanmean( abs_zscore_auc_narrow{2}, 2 ) );
-fprintf('Median AUC/bin ACC broad: %0.3f; ACC narrow: %0.3f; p: %f\n', median_acc_broad, median_acc_narrow, p_acc );
-
-p_bla = ranksum( nanmedian( abs_zscore_auc_broad{1} ), nanmedian( abs_zscore_auc_narrow{1} ) );
-median_bla_broad = nanmedian( nanmean( abs_zscore_auc_broad{1}, 2 ) );
-median_bla_narrow = nanmedian( nanmean( abs_zscore_auc_narrow{1}, 2 ) );
-fprintf('Median AUC/bin BLA broad: %0.3f; ACC narrow: %0.3f; p: %f\n', median_bla_broad, median_bla_narrow, p_bla );
-
-
-p_acc = ranksum( nanmean( abs_zscore_auc_broad{2}, 2 ), nanmean( abs_zscore_auc_narrow{2}, 2 ) );
-mean_acc_broad = nanmean( nanmean( abs_zscore_auc_broad{2} ) );
-mean_acc_narrow = nanmean( nanmean( abs_zscore_auc_narrow{2} ) );
-fprintf('Median AUC/unit ACC broad: %0.3f; ACC narrow: %0.3f; p: %f\n', mean_acc_broad, mean_acc_narrow, p_acc );
-
-p_bla = ranksum( nanmean( abs_zscore_auc_broad{1}, 2 ), nanmean( abs_zscore_auc_narrow{1}, 2 ) );
-mean_bla_broad = nanmedian( nanmean( abs_zscore_auc_broad{1}, 2 ) );
-mean_bla_narrow = nanmedian( nanmean( abs_zscore_auc_narrow{1}, 2 ) );
-fprintf('Median AUC/unit BLA broad: %0.3f; ACC narrow: %0.3f; p: %f\n', mean_bla_broad, mean_bla_narrow, p_bla );
-
-
-%% Max AUC/unit comparison: ACC and BLA
-
-% Calculate max and SEM for ACC
-max_acc_broad = nanmean(max(abs_zscore_auc_broad{2}, [], 2));
-sem_acc_broad = sem(max(abs_zscore_auc_broad{2}, [], 2));
-max_acc_narrow = nanmean(max(abs_zscore_auc_narrow{2}, [], 2));
-sem_acc_narrow = sem(max(abs_zscore_auc_narrow{2}, [], 2));
-
-% Calculate max and SEM for BLA
-max_bla_broad = nanmean(max(abs_zscore_auc_broad{1}, [], 2));
-sem_bla_broad = sem(max(abs_zscore_auc_broad{1}, [], 2));
-max_bla_narrow = nanmean(max(abs_zscore_auc_narrow{1}, [], 2));
-sem_bla_narrow = sem(max(abs_zscore_auc_narrow{1}, [], 2));
-
-% Bar graph parameters
-means_acc = [max_acc_broad, max_acc_narrow];
-sems_acc = [sem_acc_broad, sem_acc_narrow];
-means_bla = [max_bla_broad, max_bla_narrow];
-sems_bla = [sem_bla_broad, sem_bla_narrow];
-xticklabels = {'ACC', 'BLA'};
-
-% Create figure
-figure;
-
-% Plot means for ACC
-bar(1, means_acc(1), 'BarWidth', 0.5, 'FaceColor', 'r');
-hold on;
-bar(2, means_acc(2), 'BarWidth', 0.5, 'FaceColor', 'b');
-
-% Plot means for BLA
-bar(4, means_bla(1), 'BarWidth', 0.5, 'FaceColor', 'r');
-bar(5, means_bla(2), 'BarWidth', 0.5, 'FaceColor', 'b');
-hold off;
-
-% Plot standard errors for ACC
-hold on;
-errorbar([1, 2], means_acc, sems_acc, 'k.', 'LineWidth', 1, 'CapSize', 10);
-
-% Plot standard errors for BLA
-errorbar([4, 5], means_bla, sems_bla, 'k.', 'LineWidth', 1, 'CapSize', 10);
-hold off;
-
-% Customize the plot
-title('Max AUC Comparison - Broad vs Narrow');
-xlabel('Category');
-ylabel('Max AUC');
-legend('Broad', 'Narrow', 'Location', 'best');
-set(gca, 'XTick', [1.5, 4.5], 'XTickLabel', xticklabels);
-grid on;
-
-p_acc = ranksum( max( abs_zscore_auc_broad{2}, [], 2 ), max( abs_zscore_auc_narrow{2}, [], 2 ) );
-median_max_acc_broad = nanmedian( max( abs_zscore_auc_broad{2}, [], 2 ) );
-median_max_acc_narrow = nanmedian( max( abs_zscore_auc_narrow{2}, [], 2 ) );
-fprintf('Median max AUC val ACC; broad: %0.3f; ACC narrow: %0.3f; p: %f\n', median_max_acc_broad, median_max_acc_narrow, p_acc );
-
-p_bla = ranksum( max( abs_zscore_auc_broad{1}, [], 2 ), max( abs_zscore_auc_narrow{1}, [], 2 ) );
-median_max_bla_broad = nanmedian( max( abs_zscore_auc_broad{1}, [], 2 ) );
-median_max_bla_narrow = nanmedian( max( abs_zscore_auc_narrow{2}, [], 2 ) );
-fprintf('Median max AUC val BLA; broad: %0.3f; ACC narrow: %0.3f; p: %f\n', median_max_bla_broad, median_max_bla_narrow, p_bla );
-
-%%
-function [semval] = sem(vector_data)
-
-% Recall that s.e.m. = std(x)/sqrt(length(x));
-nonan_std = nanstd(vector_data);
-nonan_len = length(vector_data(~isnan(vector_data)));
-
-% Plug in values
-semval = nonan_std / sqrt(nonan_len);
-
+if recalculate_auc
+    [auc_enf_f, z_scored_aucs_enf_f, auc_labels_enf_f] = eisg.auc.calculate_roi_comparison_auc(...
+        psth_matrix, psth_labels, roi_a, roi_b...
+        );
+    save( fullfile(data_p, 'eyenf_face_comparison_auc_values.mat'), 'auc_enf_f', 'z_scored_aucs_enf_f', 'auc_labels_enf_f' );
+else
+    load( fullfile(data_p, 'eyenf_face_comparison_auc_values.mat') );
 end
 
-%}
+%% Plot and Compare AUC
+% Analyze for ACC
+region = 'acc';
+
+% Ploting EyeNF vs Face AUC Timeseries
+figure();
+eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
+    t, z_scored_aucs_enf_f, auc_labels_enf_f, region, excluded_categories);
+sgtitle(['EyeNF vs Face AUC Timeseries for: ' region]); drawnow;
+
+% Plotting mean AUC/unit violinplots
+figure();
+eisg.plot.violinplot_compare_mean_auc_per_unit(t, z_scored_aucs_enf_f,...
+    auc_labels_enf_f, region, excluded_categories,...
+    unit_auc_comparison_subplots, pre_time_range, post_time_range, print_stats);
+sgtitle(['EyeNF vs Face AUC/unit comparison across celltypes for: ' region]); drawnow;
+
+% Analyze for BLA
+region = 'bla';
+
+% Ploting EyeNF vs Face AUC Timeseries
+figure();
+eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
+    t, z_scored_aucs_enf_f, auc_labels_enf_f, region, excluded_categories);
+sgtitle(['EyeNF vs Face AUC Timeseries for: ' region]); drawnow;
+
+% Plotting mean AUC/unit violinplots
+figure();
+eisg.plot.violinplot_compare_mean_auc_per_unit(t, z_scored_aucs_enf_f,...
+    auc_labels_enf_f, region, excluded_categories,...
+    unit_auc_comparison_subplots, pre_time_range, post_time_range, print_stats);
+sgtitle(['EyeNF vs Face AUC/unit comparison across celltypes for: ' region]); drawnow;
