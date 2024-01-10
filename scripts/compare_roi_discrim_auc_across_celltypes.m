@@ -4,6 +4,7 @@ clear;
 
 %% Script Parameters
 do_psth_extraction = false;
+recalculate_auc = true;
 smoothen_psth = true; % This is a nontrivial thing
 
 % Validity filter for units
@@ -54,7 +55,6 @@ replace( spike_labels, 'b', 'outlier');
 disp('Done');
 
 %% Declare PSTH Extraction Parameters
-
 min_t = -0.5;
 max_t = 0.5;
 bin_width = 0.01;
@@ -96,9 +96,14 @@ end
 % Calculating the AUC values
 roi_a = 'whole_face';
 roi_b = 'right_nonsocial_object_whole_face_matched';
-[auc_f_o, z_scored_auc_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
-    psth_matrix, psth_labels, roi_a, roi_b...
-    );
+if recalculate_auc
+    [auc_f_o, z_scored_auc_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
+        psth_matrix, psth_labels, roi_a, roi_b...
+        );
+    save( fullfile(data_p, 'face_obj_comparison_auc_values.mat'), 'auc_f_o', 'z_scored_auc_f_o', 'auc_labels_f_o' );
+else
+    load( fullfile(data_p, 'face_obj_comparison_auc_values.mat') );
+end
 
 % Analyze for ACC
 region = 'acc';
@@ -136,17 +141,18 @@ title('Sample Violin Plot');
 xlabel('Groups');
 ylabel('Data Values');
 
+%{
 %% Functions
 
-function violinplot_compare_mean_auc_per_unit
+function violinplot_compare_mean_auc_per_unit(z_scored_auc, auc_labels,...
+    unit_auc_comparison_subplots)
 
 
 
 
 end
 
-
-
+%}
 
 
 
@@ -177,9 +183,8 @@ region = 'bla';
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
     t, z_scored_auc_enf_f, auc_labels_enf_f, region, excluded_categories);
 sgtitle(['Eyes vs Non-eye Face AUC Timeseries for: ' region]); drawnow;
- }%
 
-%{
+
 %% Mean AUC/unit comparison: ACC and BLA
 
 % Calculate mean and SEM for ACC
