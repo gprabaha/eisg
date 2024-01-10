@@ -4,3 +4,7 @@ processed_data/
 *.asv
 *.out
 *.mat
+*.png
+*.fig
+*.eps
+*.pdf
