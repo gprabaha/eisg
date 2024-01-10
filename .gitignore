@@ -1,8 +1,6 @@
 processed_data/
-data/
-polts/
-reformatted/
 .DS_Store
 *.m~
 *.asv
 *.out
+*.mat
