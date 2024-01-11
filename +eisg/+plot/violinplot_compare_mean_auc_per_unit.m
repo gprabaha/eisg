@@ -24,7 +24,6 @@ abs_zscored_auc = abs(z_scored_aucs);
 num_subplots = numel(unit_auc_comparison_subplots);
 for subplot_ind = 1:num_subplots
     time_period = unit_auc_comparison_subplots{subplot_ind};
-    cell_types = auc_labels_f_o('cell-type');
     switch time_period
         case 'pre'
             binary_time_ind = t > pre_time_range(1) & t <= pre_time_range(2);
@@ -57,6 +56,6 @@ end
 
 function mean_response = find_unit_mean_response(abs_zscored_auc, inds, binary_time_ind)
 
-mean_response = mean( abs_zscored_auc(inds, binary_time_ind), 2 );
+mean_response = mean( abs_zscored_auc(inds, binary_time_ind), 2, 'omitnan');
 
 end

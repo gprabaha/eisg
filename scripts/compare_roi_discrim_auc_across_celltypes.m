@@ -3,9 +3,15 @@ clc;
 clear;
 
 %% Script Parameters
+% PSTH parameters
 do_psth_extraction = false;
-recalculate_auc = false;
+min_t = -0.5;
+max_t = 0.5;
+bin_width = 0.01;
 smoothen_psth = true; % This is a nontrivial thing
+
+% Other binary switches
+recalculate_auc = false;
 print_stats = true;
 
 % Validity filter for units
@@ -17,7 +23,7 @@ excluded_categories = {'outlier', 'ofc', 'dmpfc'};
 % AUC/unit subplots
 unit_auc_comparison_subplots = {'pre', 'post', 'total time'};
 pre_time_range = [-0.5 0]; % in seconds
-post_time_range = [0 0.5];
+post_time_range = [0. 0.5];
 
 %% Loading Data
 disp('Loading data...')
@@ -57,12 +63,7 @@ replace( spike_labels, 'm', 'broad');
 replace( spike_labels, 'b', 'outlier');
 disp('Done');
 
-%% Declare PSTH Extraction Parameters
-min_t = -0.5;
-max_t = 0.5;
-bin_width = 0.01;
-
-%% Compute/Load PSTH and Associated Parameters
+%% Compute/Load PSTH
 if do_psth_extraction
     disp('Computing PSTH...');
     rois = {'face', 'eyes_nf', 'whole_face', 'right_nonsocial_object_whole_face_matched'};
@@ -100,17 +101,20 @@ end
 roi_a = 'whole_face';
 roi_b = 'right_nonsocial_object_whole_face_matched';
 if recalculate_auc
-    [auc_f_o, z_scored_aucs_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
+    [aucs_f_o, z_scored_aucs_f_o, auc_labels_f_o] = eisg.auc.calculate_roi_comparison_auc(...
         psth_matrix, psth_labels, roi_a, roi_b...
         );
-    save( fullfile(data_p, 'face_obj_comparison_auc_values.mat'), 'auc_f_o', 'z_scored_aucs_f_o', 'auc_labels_f_o' );
+    save( fullfile(data_p, 'face_obj_comparison_auc_values.mat'), 'aucs_f_o', 'z_scored_aucs_f_o', 'auc_labels_f_o' );
 else
     load( fullfile(data_p, 'face_obj_comparison_auc_values.mat') );
 end
 
 %% Plot and Compare AUC
+disp('AUC values: Face vs Obj comparison');
+
 % Analyze for ACC
 region = 'acc';
+fprintf('Region: %s\n', region);
 
 % Ploting Face vs Obj AUC Timeseries
 figure();
@@ -127,6 +131,7 @@ sgtitle(['Face vs Obj AUC/unit comparison across celltypes for: ' region]); draw
 
 % Analyze for BLA
 region = 'bla';
+fprintf('Region: %s\n', region);
 
 % Ploting Face vs Obj AUC Timeseries
 figure();
@@ -143,21 +148,23 @@ sgtitle(['Face vs Obj AUC/unit comparison across celltypes for: ' region]); draw
 
 %% EyeNF vs Face AUC
 % Calculating the AUC values
+
 roi_a = 'eyes_nf';
 roi_b = 'face';
 if recalculate_auc
-    [auc_enf_f, z_scored_aucs_enf_f, auc_labels_enf_f] = eisg.auc.calculate_roi_comparison_auc(...
+    [aucs_enf_f, z_scored_aucs_enf_f, auc_labels_enf_f] = eisg.auc.calculate_roi_comparison_auc(...
         psth_matrix, psth_labels, roi_a, roi_b...
         );
-    save( fullfile(data_p, 'eyenf_face_comparison_auc_values.mat'), 'auc_enf_f', 'z_scored_aucs_enf_f', 'auc_labels_enf_f' );
+    save( fullfile(data_p, 'eyenf_face_comparison_auc_values.mat'), 'aucs_enf_f', 'z_scored_aucs_enf_f', 'auc_labels_enf_f' );
 else
     load( fullfile(data_p, 'eyenf_face_comparison_auc_values.mat') );
 end
 
 %% Plot and Compare AUC
+disp('AUC values: EyesNF vs Face comparison');
 % Analyze for ACC
 region = 'acc';
-
+fprintf('Region: %s\n', region);
 % Ploting EyeNF vs Face AUC Timeseries
 figure();
 eisg.plot.plot_zscored_auc_timeseries_across_celltypes(...
@@ -173,6 +180,7 @@ sgtitle(['EyeNF vs Face AUC/unit comparison across celltypes for: ' region]); dr
 
 % Analyze for BLA
 region = 'bla';
+fprintf('Region: %s\n', region);
 
 % Ploting EyeNF vs Face AUC Timeseries
 figure();
