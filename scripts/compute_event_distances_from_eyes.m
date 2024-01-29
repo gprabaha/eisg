@@ -1,4 +1,4 @@
-function res = compute_event_distances(events, pos_file_list, fix_file_list, roi_file_list)
+function res = compute_event_distances_from_eyes(events, pos_file_list, fix_file_list, roi_file_list)
 
 %%
 
@@ -23,12 +23,17 @@ m2_dist_to_m1s_eyes = nan( rows(events.events), 1 );
 m2_fix_props = nan( size(m2_dist_to_m1s_eyes) );
 
 for i = 1:numel(pos_file_list)
+    fprintf( '\n %d of %d', i, numel(pos_file_list) );
     event_index = I{i};
     pos_file = shared_utils.io.fload( pos_file_list{i} );
     fix_file = shared_utils.io.fload( fix_file_list{i} );
     roi_file = shared_utils.io.fload( roi_file_list{i} );
     start_ind = events.events(event_index, events.event_key('start_index'));
     stop_ind = events.events(event_index, events.event_key('stop_index'));
+
+    if ( ~isfield(roi_file, 'm2') )
+        continue;
+    end
 
     m2_eye = roi_file.m1.rects('eyes_nf');
     m2_eye_center = [ mean(m2_eye([1, 3])), mean(m2_eye([2, 4])) ];

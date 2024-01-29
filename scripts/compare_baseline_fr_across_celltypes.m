@@ -8,6 +8,8 @@ recalculate_baseline_stats = false;
 
 %% Loading Data
 data_p = fullfile( eisg.util.project_path, 'processed_data');
+fprintf('Data folder path is: %s\n', data_p);
+disp('Loading data...');
 
 % Neural data
 sorted = shared_utils.io.fload( fullfile(data_p,...
@@ -23,6 +25,7 @@ evts = bfw.event_column( events, 'start_time' );
 % Celltype labels
 ct_labels = shared_utils.io.fload(fullfile(data_p,...
     'celltype-labels_pfc-combined-class_p2v.mat'), 'ct_labels');
+disp('Done');
 
 %% Data Preprocessing
 disp('Preprocessing data...');
@@ -68,7 +71,7 @@ end
 
 %% Declare Baseline Parameters
 baseline_time_snippet = [-0.4, -0.05];
-sprintf('Baseline time snippet is from %0.2f s to %0.2f s\n', baseline_time_snippet(1), baseline_time_snippet(2));
+fprintf('Baseline time snippet is from %0.2f s to %0.2f s\n', baseline_time_snippet(1), baseline_time_snippet(2));
 
 %% Calculate Baseline Stats
 if recalculate_baseline_stats

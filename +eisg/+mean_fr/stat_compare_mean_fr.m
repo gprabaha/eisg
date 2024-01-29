@@ -1,4 +1,4 @@
-function result = stat_compare_mean_fr( psth_matrix, t, ind_a, ind_b,...
+function result = stat_compare_mean_fr( spike_ct_mat, t, ind_a, ind_b,...
     method, time_window )
 
 if nargin < 5
@@ -9,10 +9,10 @@ if nargin < 5
 end
 
 result = nan;
-if ~(isempty(ind_a) || isempty(ind_b))
+if ~(isempty(ind_a) || isempty(ind_b))    
     time_vec = t > time_window(1) & t <= time_window(2);
-    mean_vec_a = mean( psth_matrix(ind_a, time_vec), 2, 'omitnan' );
-    mean_vec_b = mean( psth_matrix(ind_b, time_vec), 2, 'omitnan' );
+    mean_vec_a = mean( spike_ct_mat(ind_a, time_vec), 2, 'omitnan' );
+    mean_vec_b = mean( spike_ct_mat(ind_b, time_vec), 2, 'omitnan' );
     switch method
         case 'ranksum'
             [~, result] = ranksum( mean_vec_a, mean_vec_b );

@@ -1,4 +1,4 @@
-%% Workspace Cleanup
+% Workspace Cleanup
 clc;
 clear;
 
@@ -9,9 +9,13 @@ smoothen_psth = false;
 % Validity filter for units
 validity_filter = {'valid-unit', 'maybe-valid-unit'};
 
+% For analysis
+excluded_categories = {'outlier', 'ofc', 'dmpfc'};
+
 %% Loading Data
-disp('Loading data...')
 data_p = fullfile( eisg.util.project_path, 'processed_data');
+fprintf('Data folder path is: %s\n', data_p);
+disp('Loading data...');
 
 % Neural data
 sorted = shared_utils.io.fload( fullfile(data_p,...
@@ -46,7 +50,6 @@ replace(spike_labels, 'm', 'broad');
 replace(spike_labels, 'b', 'outlier');
 
 %% Declare PSTH Extraction Parameters
-
 min_t = -0.5;
 max_t = 0.5;
 bin_width = 0.01;
@@ -63,6 +66,8 @@ if do_psth_extraction
         unit_spike_ts, spike_labels, spk_mask, ...
         evts, events.labels, evt_mask, ...
         min_t, max_t, bin_width);
+    pre_time = t > pre_time_range(1) & t <= pre_time_range(2);
+    post_time = t > post_time_range(1) & t <= post_time_range(2);
     % Save variables
     disp('Saving PSTH...');
     save(fullfile(data_p, 'binned_unit_psth_social_gaze.mat')...
@@ -74,12 +79,9 @@ else
     psth_matrix = loaded_data.psth_matrix;
     psth_labels = loaded_data.psth_labels;
     t = loaded_data.t;
+    pre_time = t > pre_time_range(1) & t <= pre_time_range(2);
+    post_time = t > post_time_range(1) & t <= post_time_range(2);
 end
-
-%% PSTH Matrix Parameters
-
-pre_time = t > pre_time_range(1) & t <= pre_time_range(2);
-post_time = t > post_time_range(1) & t <= post_time_range(2);
 
 %% Smoothen Data
 % !!
@@ -106,6 +108,7 @@ anova_outs = eisg.anova.hanova(spike_pre, psth_labels', mask, anova_I);
 anova_outs_post = eisg.anova.hanova(spike_post, psth_labels', mask, anova_I);
 anova_ps = cate1(anova_outs.ps);
 anova_post_ps = cate1(anova_outs_post.ps);
+disp('Done');
 
 %% Cell Type Analysis - ANOVA Factor 2 (Face vs Obj)
 disp('Printing results...');
@@ -113,7 +116,11 @@ factor_ind = 2;
 use_labels_face_obj = anova_labels';
 sig_cells_face_obj = anova_ps(:, factor_ind) < 0.05 | anova_post_ps(:, factor_ind) < 0.05;
 
-chi2_mask = findnone(anova_labels, {'outlier', 'ofc', 'dmpfc'});
+
+% Find indices of categories to exclude
+chi2_mask = findnone(anova_labels, excluded_categories);
+
+% Apply mask to anova_labels
 [~, cell_type_I_face_obj, cell_types_face_obj] = keepeach(anova_labels'...
     , {'cell-type', 'region'}, chi2_mask);
 
@@ -132,13 +139,19 @@ disp(prop_table_face_obj);
 disp('Chi-Square Test for Factor 2 (Face vs Obj):');
 disp(tbl_face_obj);
 
+plot_cell_type_pie_by_region(sig_cells_face_obj, cell_types_face_obj, cell_type_I_face_obj, 'Face vs Obj');
+
+%% Pie charts
+
+% Add scripts here to convert the tables to piecharts
+
 %% Cell Type Analysis - ANOVA Factor 1 (Eye vs Non-eye Face)
 factor_ind = 1;
 use_labels_eye_nef = fcat.from(anova_labels(find(sig_cells_face_obj), :), getcats(anova_labels))';
 sig_cells_eye_nef = sig_cells_face_obj & (anova_ps(:, factor_ind) < 0.05 | anova_post_ps(:, factor_ind) < 0.05);
 sig_cells_eye_nef = sig_cells_eye_nef(sig_cells_face_obj);
 
-chi2_mask = findnone(use_labels_eye_nef, {'outlier', 'ofc', 'dmpfc'});
+chi2_mask = findnone(use_labels_eye_nef, excluded_categories);
 [~, cell_type_I_eye_nef, cell_types_eye_nef] = keepeach(use_labels_eye_nef'...
     , {'cell-type', 'region'}, chi2_mask);
 
@@ -155,6 +168,8 @@ disp(prop_table_eye_nef);
 disp('Chi-Square Test for Factor 1 (Eye vs Non-eye Face):');
 disp(tbl_eye_nef);
 
+plot_cell_type_pie_by_region(sig_cells_face_obj, cell_types_face_obj, cell_type_I_face_obj, 'Eye vs Non-eye Face');
+
 %% Ranksum Tests
 disp('Performing ranksum tests...');
 pre_rs_outs = dsp3.ranksum( spike_pre, psth_labels', {'uuid'}, 'whole_face', 'right_nonsocial_object_whole_face_matched' );
@@ -170,7 +185,7 @@ post_rs_zs = cellfun(@(x) x.zval, post_rs_outs.rs_tables);
 disp('Printing results...');
 use_labels_rs = pre_rs_outs.rs_labels';
 sig_cells = pre_rs_ps < 0.05 | post_rs_ps < 0.05;
-chi2_mask = findnone( use_labels_rs', {'outlier', 'ofc', 'dmpfc'} );
+chi2_mask = findnone( use_labels_rs', excluded_categories );
 [~, cell_type_I_rs, cell_types_rs] = keepeach(use_labels_rs', {'cell-type', 'region'}, chi2_mask);
 cell_type_count_rs = cellfun(@(x) numel(sig_cells(x)), cell_type_I_rs);
 sig_cell_count_rs = cellfun(@(x) nnz(sig_cells(x)), cell_type_I_rs);
@@ -180,8 +195,51 @@ disp('Proportion Table for Ranksum Tests:');
 disp(prop_table_rs);
 
 [tbl_rs, reg_labels_rs] = do_prop_tests(sig_cells, use_labels_rs', chi2_mask);
-disp('Chi-Square Test for Ranksum Tests:');
+disp('Chi-Square Test for Face vs Obj Ranksum Tests:');
 disp(tbl_rs);
+
+%%
+function plot_cell_type_pie_by_region(sig_cells, cell_types_face_obj, cell_type_I_face_obj, additional_title)
+    % Get unique regions
+    regions = unique(cell_types_face_obj(2, :));
+
+    % Loop through each region
+    for r = 1:numel(regions)
+        current_region = regions{r};
+        
+        % Get indices for current region
+        region_indices = find(strcmp(cell_types_face_obj(2, :), current_region));
+
+        % Create a new figure for the current region
+        figure;
+        sgtitle(['Significant Cell Fraction by Cell Type in ' current_region ' - ' additional_title]);
+
+        % Loop through each cell type within the region
+        for i = 1:numel(region_indices)
+            % Get cell type
+            cell_type = cell_types_face_obj{1, region_indices(i)};
+            
+            % Get indices for current cell type
+            current_indices = cell_type_I_face_obj{region_indices(i)};
+
+            % Calculate fraction of significant cells for current cell type within the region
+            num_sig_cells = sum(sig_cells(current_indices));
+            num_total_cells = numel(current_indices);
+            fraction_sig_cells = num_sig_cells / num_total_cells;
+
+            % Format percentage
+            percentage_sig = sprintf('Percentage significant: %.2f%% (%d/%d units)', fraction_sig_cells * 100, num_sig_cells, num_total_cells);
+
+            % Plot pie chart in a subplot
+            subplot(1, 2, i);
+            pie([fraction_sig_cells, 1 - fraction_sig_cells], {'Significant', 'Not Significant'});
+            title({cell_type; percentage_sig});
+        end
+    end
+end
+
+
+
 
 %% Helper Functions
 function [tbl, reg_labels, tbls] = do_prop_tests(meets_criterion, labels, mask)

@@ -2,9 +2,10 @@
 clc;
 clear;
 
-%% Loading Data
-disp('Loading data...')
+ %% Loading Data
 data_p = fullfile( eisg.util.project_path, 'processed_data');
+fprintf('Data folder path is: %s\n', data_p);
+disp('Loading data...');
 
 % Neural data
 sorted = shared_utils.io.fload( fullfile(data_p,...

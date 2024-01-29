@@ -26,8 +26,9 @@ pre_time_range = [-0.5 0]; % in seconds
 post_time_range = [0. 0.5];
 
 %% Loading Data
-disp('Loading data...')
 data_p = fullfile( eisg.util.project_path, 'processed_data');
+fprintf('Data folder path is: %s\n', data_p);
+disp('Loading data...');
 
 % Neural data
 sorted = shared_utils.io.fload( fullfile(data_p,...
