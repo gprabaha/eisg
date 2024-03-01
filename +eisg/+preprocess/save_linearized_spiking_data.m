@@ -5,8 +5,7 @@ data_p = fullfile( eisg.util.project_path, 'processed_data' );
 disp('Loading data...');
 sorted = shared_utils.io.fload( fullfile(data_p,...
   'sorted_neural_data_social_gaze.mat') );
-ct_labels = shared_utils.io.fload(fullfile(data_p,...
-    'celltype-labels_pfc-combined-class_p2v.mat'), 'ct_labels');
+a = load( fullfile( data_p, 'celltype-labels_pfc-combined-class_p2v.mat' ) );
 disp('Done');
 
 disp('Processing data...');
