@@ -3,6 +3,9 @@ clc;
 clear;
 
 %% Script Parameters
+
+data_p = fullfile( eisg.util.project_path, 'processed_data' );
+
 do_psth_extraction = false;
 smoothen_psth = false;
 
@@ -11,15 +14,6 @@ validity_filter = {'valid-unit', 'maybe-valid-unit'};
 
 % For analysis
 excluded_categories = {'outlier', 'ofc', 'dmpfc'};
-
-%% Loading Data
-data_p = fullfile( eisg.util.project_path, 'processed_data');
-fprintf('Data folder path is: %s\n', data_p);
-disp('Loading data...');
-
-% Neural data
-sorted = shared_utils.io.fload( fullfile(data_p,...
-  'sorted_neural_data_social_gaze.mat') );
 
 % Behavioral data
 events = shared_utils.io.fload( fullfile(data_p, 'events.mat') );
@@ -34,20 +28,28 @@ ct_labels = shared_utils.io.fload(fullfile(data_p,...
 disp('Done');
 
 %% Preprocessing Data
-disp('Preprocessing loaded data...')
-[unit_spike_ts, unit_wfs, spike_labels] = eisg.util.linearize_sorted(sorted);
-bfw.add_monk_labels(spike_labels);
-[uuid_I, uuids] = findall(spike_labels, 'uuid', find(spike_labels, validity_filter));
-match_I = bfw.find_combinations(ct_labels, uuids);
-for i = 1:numel(uuid_I)
-    if (~isempty(match_I{i}))
-        ct_label = cellstr(ct_labels, 'cell-type', match_I{i});
-        addsetcat(spike_labels, 'cell-type', ct_label, uuid_I{i});
-    end
-end
-replace(spike_labels, 'n', 'narrow');
-replace(spike_labels, 'm', 'broad');
-replace(spike_labels, 'b', 'outlier');
+% disp('Preprocessing loaded data...')
+% [unit_spike_ts, unit_wfs, spike_labels] = eisg.util.linearize_sorted(sorted);
+% bfw.add_monk_labels(spike_labels);
+% [uuid_I, uuids] = findall(spike_labels, 'uuid', find(spike_labels, validity_filter));
+% match_I = bfw.find_combinations(ct_labels, uuids);
+% for i = 1:numel(uuid_I)
+%     if (~isempty(match_I{i}))
+%         ct_label = cellstr(ct_labels, 'cell-type', match_I{i});
+%         addsetcat(spike_labels, 'cell-type', ct_label, uuid_I{i});
+%     end
+% end
+% replace(spike_labels, 'n', 'narrow');
+% replace(spike_labels, 'm', 'broad');
+% replace(spike_labels, 'b', 'outlier');
+
+%%
+
+spike_data_filename     = 'spike_data_celltype_labelled.mat';
+spike_data              = load( fullfile( data_p, spike_data_filename ) );
+spike_data              = sg_disp.util.get_sub_struct( spike_data );
+all_unit_spike_ts       = spike_data.all_unit_spike_ts;
+spike_labels            = spike_data.spike_labels;
 
 %% Declare PSTH Extraction Parameters
 min_t = -0.5;
@@ -63,7 +65,7 @@ if do_psth_extraction
     evt_mask = find(events.labels, [{'m1'}, rois]);
     spk_mask = find(spike_labels, validity_filter); 
     [psth_matrix, psth_labels, t] = eisg.psth.compute_psth(...
-        unit_spike_ts, spike_labels, spk_mask, ...
+        all_unit_spike_ts, spike_labels, spk_mask, ...
         evts, events.labels, evt_mask, ...
         min_t, max_t, bin_width);
     pre_time = t > pre_time_range(1) & t <= pre_time_range(2);

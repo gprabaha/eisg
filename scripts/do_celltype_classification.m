@@ -65,7 +65,7 @@ features_mask = find( feature_labels, [feature_list, validity_filter] );
 classification_subset_switch = 1;
 
 do_classification_again = false;
-do_save = true;
+do_save = false;
 
 %% Do the Classification
 switch classification_subset_switch
@@ -132,7 +132,7 @@ replace( ct_labels, 'b', 'outlier');
 %% Plot Celltype Waveforms for each Region
 
 % Saving parameters
-save_p = fullfile( eisg.util.project_path, 'data/plots/celltype_wfs', dsp3.datedir );
+save_p = fullfile( eisg.util.project_path, 'plots/celltype_wfs', dsp3.datedir );
 do_save = false;
 
 % Add cell-type labels to a temp spike_labels variable
